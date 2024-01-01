@@ -3,6 +3,7 @@ import torch.nn as nn
 from encoder import Encoder
 from decoder import Decoder
 from codebook import Codebook
+import torch.nn.functional as F
 
 
 class VQGAN(nn.Module):
@@ -23,6 +24,7 @@ class VQGAN(nn.Module):
     def forward(self, imgs):
         encoded_images = self.encoder(imgs)
         quant_conv_encoded_images = self.quant_conv(encoded_images)
+        quant_conv_encoded_images = F.normalize(quant_conv_encoded_images,dim=1)
         codebook_mapping, codebook_indices, q_loss = self.codebook(quant_conv_encoded_images)
         post_quant_conv_mapping = self.post_quant_conv(codebook_mapping)
         decoded_images = self.decoder(post_quant_conv_mapping)

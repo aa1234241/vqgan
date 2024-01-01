@@ -17,9 +17,9 @@ import matplotlib.pyplot as plt
 class TrainVQGAN:
     def __init__(self, args):
         self.vqgan = VQGAN(args).to(device=args.device)
-        # self.vqgan.load_state_dict(torch.load(os.path.join("/media/userdisk1/code/VQGAN-pytorch/checkpoints", "vqgan_epoch_112.pt")))
+        # self.vqgan.load_state_dict(torch.load(os.path.join("/media/userdisk1/code/VQGAN-pytorch/checkpoints", "vqgan_epoch_264.pt")))
         self.discriminator = Discriminator(args).to(device=args.device)
-        # self.discriminator.load_state_dict(torch.load(os.path.join("/media/userdisk1/code/VQGAN-pytorch/checkpoints", "discriminator_epoch_112.pt")))
+        # self.discriminator.load_state_dict(torch.load(os.path.join("/media/userdisk1/code/VQGAN-pytorch/checkpoints", "discriminator_epoch_264.pt")))
 
         self.discriminator.apply(weights_init)
         self.perceptual_loss = LPIPS().eval().to(device=args.device)
@@ -53,7 +53,7 @@ class TrainVQGAN:
     def train(self, args):
         train_dataset = load_data(args)
         steps_per_epoch = len(train_dataset)
-        for epoch in range(113,args.epochs):
+        for epoch in range(0,args.epochs):
             usage_codebook = np.zeros(shape=(args.num_codebook_vectors))
             with tqdm(range(len(train_dataset))) as pbar:
                 for i, imgs in zip(pbar, train_dataset):
@@ -134,7 +134,7 @@ if __name__ == '__main__':
     parser.add_argument('--learning-rate', type=float, default=2.25e-05, help='Learning rate (default: 0.0002)')
     parser.add_argument('--beta1', type=float, default=0.5, help='Adam beta param (default: 0.0)')
     parser.add_argument('--beta2', type=float, default=0.9, help='Adam beta param (default: 0.999)')
-    parser.add_argument('--disc-start', type=int, default=0, help='When to start the discriminator (default: 0)')
+    parser.add_argument('--disc-start', type=int, default=10000 , help='When to start the discriminator (default: 0)')
     parser.add_argument('--disc-factor', type=float, default=1., help='')
     parser.add_argument('--rec-loss-factor', type=float, default=1., help='Weighting factor for reconstruction loss.')
     parser.add_argument('--perceptual-loss-factor', type=float, default=1.0,

@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class Codebook(nn.Module):
@@ -13,6 +14,7 @@ class Codebook(nn.Module):
         self.embedding.weight.data.uniform_(-1.0 / self.num_codebook_vectors, 1.0 / self.num_codebook_vectors)
 
     def forward(self, z):
+        self.embedding.weight = torch.nn.Parameter(F.normalize(self.embedding.weight, dim=1))
         z = z.permute(0, 2, 3, 1).contiguous()
         z_flattened = z.view(-1, self.latent_dim)
 
