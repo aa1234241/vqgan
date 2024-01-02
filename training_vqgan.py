@@ -17,11 +17,13 @@ import matplotlib.pyplot as plt
 class TrainVQGAN:
     def __init__(self, args):
         self.vqgan = VQGAN(args).to(device=args.device)
-        # self.vqgan.load_state_dict(torch.load(os.path.join("/media/userdisk1/code/VQGAN-pytorch/checkpoints", "vqgan_epoch_264.pt")))
+        self.vqgan.load_state_dict(
+            torch.load(os.path.join("/media/userdisk1/code/VQGAN-pytorch/checkpoints", "vqgan_epoch_172.pt")))
         self.discriminator = Discriminator(args).to(device=args.device)
-        # self.discriminator.load_state_dict(torch.load(os.path.join("/media/userdisk1/code/VQGAN-pytorch/checkpoints", "discriminator_epoch_264.pt")))
+        self.discriminator.load_state_dict(
+            torch.load(os.path.join("/media/userdisk1/code/VQGAN-pytorch/checkpoints", "discriminator_epoch_172.pt")))
 
-        self.discriminator.apply(weights_init)
+        # self.discriminator.apply(weights_init)
         self.perceptual_loss = LPIPS().eval().to(device=args.device)
         self.opt_vq, self.opt_disc = self.configure_optimizers(args)
         # self.usage_codebook = np.zeros(shape=(args.num_codebook_vectors))
@@ -53,7 +55,7 @@ class TrainVQGAN:
     def train(self, args):
         train_dataset = load_data(args)
         steps_per_epoch = len(train_dataset)
-        for epoch in range(0,args.epochs):
+        for epoch in range(173, args.epochs):
             usage_codebook = np.zeros(shape=(args.num_codebook_vectors))
             with tqdm(range(len(train_dataset))) as pbar:
                 for i, imgs in zip(pbar, train_dataset):
@@ -108,7 +110,8 @@ class TrainVQGAN:
 
                     pbar.set_postfix(
                         VQ_Loss=np.round(vq_loss.cpu().detach().numpy().item(), 5),
-                        GAN_Loss=np.round(gan_loss.cpu().detach().numpy().item(), 3)
+                        GAN_Loss=np.round(gan_loss.cpu().detach().numpy().item(), 3),
+                        lbd=lbd.data.cpu().numpy()
                     )
                     pbar.update(0)
                 torch.save(self.vqgan.state_dict(), os.path.join("checkpoints", f"vqgan_epoch_{epoch}.pt"))
@@ -134,8 +137,8 @@ if __name__ == '__main__':
     parser.add_argument('--learning-rate', type=float, default=2.25e-05, help='Learning rate (default: 0.0002)')
     parser.add_argument('--beta1', type=float, default=0.5, help='Adam beta param (default: 0.0)')
     parser.add_argument('--beta2', type=float, default=0.9, help='Adam beta param (default: 0.999)')
-    parser.add_argument('--disc-start', type=int, default=10000 , help='When to start the discriminator (default: 0)')
-    parser.add_argument('--disc-factor', type=float, default=1., help='')
+    parser.add_argument('--disc-start', type=int, default=10000, help='When to start the discriminator (default: 0)')
+    parser.add_argument('--disc-factor', type=float, default=0.2, help='')
     parser.add_argument('--rec-loss-factor', type=float, default=1., help='Weighting factor for reconstruction loss.')
     parser.add_argument('--perceptual-loss-factor', type=float, default=1.0,
                         help='Weighting factor for perceptual loss.')
