@@ -8,13 +8,14 @@ import torch.nn.functional as F
 from torchvision import utils as vutils
 from transformer import VQGANTransformer
 from utils import load_data, plot_images
-
+from torch import autocast
+from torch.cuda.amp import GradScaler
 
 class TrainTransformer:
     def __init__(self, args):
         self.model = VQGANTransformer(args).to(device=args.device)
         self.model.load_state_dict(
-            torch.load(os.path.join("/media/userdisk1/code/VQGAN-pytorch/checkpoints", "transformer_23.pt")))
+            torch.load(os.path.join("/media/userdisk1/code/VQGAN-pytorch/checkpoints", "transformer_167.pt")))
         self.optim = self.configure_optimizers()
 
         self.train(args)
@@ -51,21 +52,41 @@ class TrainTransformer:
 
     def train(self, args):
         train_dataset = load_data(args)
-        for epoch in range(args.epochs):
+        scaler = GradScaler()
+        all_loss = 0
+        best_loss = 0
+        start_epoch = 167
+        for epoch in range(start_epoch,args.epochs):
             with tqdm(range(len(train_dataset))) as pbar:
                 for i, imgs in zip(pbar, train_dataset):
                     self.optim.zero_grad()
-                    imgs = imgs.to(device=args.device)
-                    logits, targets = self.model(imgs)
-                    loss = F.cross_entropy(logits.reshape(-1, logits.size(-1)), targets.reshape(-1))
-                    loss.backward()
-                    self.optim.step()
-                    pbar.set_postfix(Transformer_Loss=np.round(loss.cpu().detach().numpy().item(), 4))
+                    with autocast(device_type='cuda', dtype=torch.float16):
+                        imgs = imgs.to(device=args.device)
+                        logits, targets = self.model(imgs)
+                        loss = F.cross_entropy(logits.reshape(-1, logits.size(-1)), targets.reshape(-1))
+                    #
+                    scaler.scale(loss).backward()
+                    scaler.step(self.optim)
+                    scaler.update()
+                    # loss.backward()
+                    # self.optim.step()
+                    if i == 0:
+                        all_loss = loss.cpu().detach().numpy().item()
+                    else:
+                        all_loss = all_loss * i / (i + 1) + loss.cpu().detach().numpy().item() / (i + 1)
+                    pbar.set_postfix(Transformer_Loss=np.round(all_loss, 4))
                     pbar.update(0)
-            log, sampled_imgs = self.model.log_images(imgs[0][None])
+
+            with autocast(device_type='cuda', dtype=torch.float16):
+                log, sampled_imgs = self.model.log_images(imgs[0][None])
             vutils.save_image(sampled_imgs.add(1).mul(0.5), os.path.join("results", f"transformer_{epoch}.jpg"), nrow=4)
             plot_images(log)
-            torch.save(self.model.state_dict(), os.path.join("checkpoints", f"transformer_{epoch}.pt"))
+            if epoch ==start_epoch:
+                best_loss =all_loss
+                torch.save(self.model.state_dict(), os.path.join("checkpoints", f"transformer_{epoch}_{all_loss}.pt"))
+            elif all_loss < best_loss:
+                best_loss = all_loss
+                torch.save(self.model.state_dict(), os.path.join("checkpoints", f"transformer_{epoch}_{all_loss}.pt"))
 
 
 if __name__ == '__main__':
@@ -79,7 +100,7 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint-path', type=str, default='./checkpoints/last_ckpt.pt', help='Path to checkpoint.')
     parser.add_argument('--device', type=str, default="cuda", help='Which device the training is on')
     parser.add_argument('--batch-size', type=int, default=20, help='Input batch size for training.')
-    parser.add_argument('--epochs', type=int, default=100, help='Number of epochs to train.')
+    parser.add_argument('--epochs', type=int, default=1000, help='Number of epochs to train.')
     parser.add_argument('--learning-rate', type=float, default=2.25e-05, help='Learning rate.')
     parser.add_argument('--beta1', type=float, default=0.5, help='Adam beta param.')
     parser.add_argument('--beta2', type=float, default=0.9, help='Adam beta param.')
@@ -93,7 +114,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     args.dataset_path = r"/media/userdisk1/code/jpg/"
-    args.checkpoint_path = r"/media/userdisk1/code/VQGAN-pytorch/checkpoints/vqgan_epoch_89.pt"
+    args.checkpoint_path = r"/media/userdisk1/code/VQGAN-pytorch/checkpoints/vqgan_epoch_307.pt"
 
     train_transformer = TrainTransformer(args)
 

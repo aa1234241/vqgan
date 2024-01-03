@@ -58,7 +58,7 @@ class TrainVQGAN:
     def train(self, args):
         train_dataset = load_data(args)
         steps_per_epoch = len(train_dataset)
-        scaler = torch.cuda.amp.GradScaler()
+        scaler = GradScaler()
         for epoch in range(309, args.epochs):
             usage_codebook = np.zeros(shape=(args.num_codebook_vectors))
             with tqdm(range(len(train_dataset))) as pbar:
@@ -100,18 +100,13 @@ class TrainVQGAN:
 
                         lbd = self.vqgan.calculate_lambda(perceptual_rec_loss, g_loss)
                         vq_loss = perceptual_rec_loss + q_loss + disc_factor * lbd * g_loss
-                    min_encoding_indices_int = min_encoding_indices.cpu()
-                    for j in range(len(min_encoding_indices_int)):
-                        usage_codebook[min_encoding_indices_int[j]] += 1
+                    # min_encoding_indices_int = min_encoding_indices.cpu()
+                    # for j in range(len(min_encoding_indices_int)):
+                    #     usage_codebook[min_encoding_indices_int[j]] += 1
 
                     scaler.scale(vq_loss).backward()
                     scaler.step(self.opt_vq)
                     scaler.update()
-
-                    # self.opt_disc.zero_grad()
-                    # gan_loss.backward()
-
-                    # self.opt_disc.step()
 
                     if i % 1000 == 0:
                         with torch.no_grad():
@@ -129,9 +124,9 @@ class TrainVQGAN:
                 torch.save(self.vqgan.state_dict(), os.path.join("checkpoints", f"vqgan_epoch_{epoch}.pt"))
                 torch.save(self.discriminator.state_dict(),
                            os.path.join("checkpoints", f"discriminator_epoch_{epoch}.pt"))
-                plt.imshow(usage_codebook.reshape(32, 32))
-                plt.savefig(os.path.join("checkpoints", f"codebook_epoch_{epoch}.png"))
-                np.save(os.path.join("checkpoints", f"codebook_epoch_{epoch}.npy"), usage_codebook)
+                # plt.imshow(usage_codebook.reshape(32, 32))
+                # plt.savefig(os.path.join("checkpoints", f"codebook_epoch_{epoch}.png"))
+                # np.save(os.path.join("checkpoints", f"codebook_epoch_{epoch}.npy"), usage_codebook)
 
 
 if __name__ == '__main__':
