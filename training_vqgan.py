@@ -13,15 +13,18 @@ from vqgan import VQGAN
 from utils import load_data, weights_init
 import matplotlib.pyplot as plt
 
+from torch import autocast
+from torch.cuda.amp import GradScaler
+
 
 class TrainVQGAN:
     def __init__(self, args):
         self.vqgan = VQGAN(args).to(device=args.device)
         self.vqgan.load_state_dict(
-            torch.load(os.path.join("/media/userdisk1/code/VQGAN-pytorch/checkpoints", "vqgan_epoch_172.pt")))
+            torch.load(os.path.join("/media/userdisk1/code/VQGAN-pytorch/checkpoints", "vqgan_epoch_306.pt")))
         self.discriminator = Discriminator(args).to(device=args.device)
         self.discriminator.load_state_dict(
-            torch.load(os.path.join("/media/userdisk1/code/VQGAN-pytorch/checkpoints", "discriminator_epoch_172.pt")))
+            torch.load(os.path.join("/media/userdisk1/code/VQGAN-pytorch/checkpoints", "discriminator_epoch_306.pt")))
 
         # self.discriminator.apply(weights_init)
         self.perceptual_loss = LPIPS().eval().to(device=args.device)
