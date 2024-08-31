@@ -1,3 +1,18 @@
+Bug fixed version of [Dominic Rampas](https://github.com/dome272/VQGAN-pytorch)'s VQGAN implementation. Many thanks to the original repo.
+
+## Update
+The original implementation has some bugs.
+- Visualization error, as shown in the example above. I have corrected it.
+- Perceptual loss error. The NetLinLayer do not have right name, so the pretrained model failed to load weights on them.
+have fixed this issue by replace it with official VQGAN code.
+- Also the decorder part in VQGAN model seems not coorect, I replace the encoder and decoder
+using the official VQGAN code.
+- For the gan loss. The disc-start should not too early, previous give value is 10000, repalce it with 100000.
+- Also, the disc-factor is too large, pervious is 1, change it to 0.2
+- I also find the gan loss is become smaller as the training progressed. The lbd value converge to a very small value liek 0.02 after 200 epochs.
+- The original code the codebook do not have a normalization operation. This cause many entry of the codebook not used during training.
+Add the embedding normalization made the codebook usage rage grow significantly.
+
 ## Note:
 Code Tutorial + Implementation Tutorial
 
@@ -65,15 +80,3 @@ Note: Let the model train for even longer to get better results.
       primaryClass={cs.CV}
 }
 ```
-## Update
-The original implementation has some errors.
-- Visualization error, as shown in the example above. I have corrected it.
-- Perceptual loss error. The NetLinLayer do not have right name, so the pretrained model failed to load weights on them.
-have fixed this issue by replace it with official VQGAN code.
-- Also the decorder part in VQGAN model seems not coorect, I replace the encoder and decoder
-using the official VQGAN code.
-- For the gan loss. The disc-start should not too early, previous give value is 10000, repalce it with 100000.
-- Also, the disc-factor is too large, pervious is 1, change it to 0.2
-- I also find the gan loss is become smaller as the training progressed. The lbd value converge to a very small value liek 0.02 after 200 epochs.
-- The original code the codebook do not have a normalization operation. This cause many entry of the codebook not used during training.
-Add the embedding normalization made the codebook usage rage grow significantly.
