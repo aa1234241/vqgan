@@ -3,15 +3,23 @@ Bug fixed version of [Dominic Rampas](https://github.com/dome272/VQGAN-pytorch)'
 ## Update
 The original implementation has some bugs.
 - Visualization error, as shown in the example above. I have corrected it.
-- Perceptual loss error. The NetLinLayer do not have right name, so the pretrained model failed to load weights on them.
-have fixed this issue by replace it with official VQGAN code.
-- Also the decorder part in VQGAN model seems not coorect, I replace the encoder and decoder
+- Perceptual loss error. The NetLinLayer does not have the right name, so the pre-trained model failed to load weights on them.
+have fixed this issue by replacing it with the official VQGAN code.
+- Also the decoder part in VQGAN model is incorrect, I replaced the encoder and decoder
 using the official VQGAN code.
-- For the gan loss. The disc-start should not too early, previous give value is 10000, repalce it with 100000.
-- Also, the disc-factor is too large, pervious is 1, change it to 0.2
-- I also find the gan loss is become smaller as the training progressed. The lbd value converge to a very small value liek 0.02 after 200 epochs.
-- The original code the codebook do not have a normalization operation. This cause many entry of the codebook not used during training.
+For the gan loss, the disc start should not be too early. The previous given value is 10000; replace it with 100000.
+- Also, the disc factor is too large, previous is 1, change it to 0.2
+I also find that the GAN loss becomes smaller as the training progresses. The lbd value converges to a very small value, like 0.02, after 200 epochs.
+- The original code in the codebook does not have a normalization operation. This cause many entry of the codebook not used during training.
 Add the embedding normalization made the codebook usage rage grow significantly.
+
+My results are shown below:
+![309_50](https://github.com/user-attachments/assets/c2441490-6abb-47cc-b6ec-b907b3d793fd)
+The top row shows the original images, and the bottom row shows the reconstructed images.
+
+![transformer_10](https://github.com/user-attachments/assets/5e900ae1-fc76-4f11-ae85-dc2b113cc6ae)
+miniGPT generated images.
+
 
 ## Note:
 Code Tutorial + Implementation Tutorial
